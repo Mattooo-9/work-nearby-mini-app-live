@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Работа рядом</title>
+    <meta name="theme-color" content="#040307" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+      :root {
+        --black: #040307;
+        --panel: #0b0710;
+        --purple-deep: #12061d;
+        --purple-line: rgba(148, 98, 214, 0.26);
+        --gold: #d6a23a;
+        --gold-light: #f1ca63;
+        --green-deep: #071d13;
+        --text: #fff8ea;
+        --muted: #b9adc8;
+        --radius: 8px;
+        color: var(--text);
+        background: var(--black);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--black); }
+      button { cursor: pointer; font: inherit; }
+      h1, h2, p { margin: 0; }
+      .app {
+        max-width: 480px;
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 16px 14px 78px;
+        background:
+          radial-gradient(circle at 20% 0%, rgba(86, 35, 150, 0.34), transparent 30%),
+          linear-gradient(180deg, var(--purple-deep), var(--black) 58%);
+      }
+      .topbar, .row, .pill, .search, .card-head, .meta, .bottom a {
+        display: flex;
+        align-items: center;
+      }
+      .topbar { justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+      h1 { font-size: 28px; line-height: 1.05; }
+      h2 { font-size: 22px; line-height: 1.12; }
+      .subtitle { margin-top: 4px; color: var(--muted); font-size: 14px; font-weight: 700; }
+      .pill {
+        gap: 6px;
+        white-space: nowrap;
+        border-radius: 999px;
+        padding: 8px 10px;
+        color: #dff8ea;
+        background: var(--green-deep);
+        border: 1px solid rgba(128, 223, 164, 0.25);
+        font-size: 13px;
+        font-weight: 850;
+      }
+      .tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        padding: 4px;
+        margin-bottom: 10px;
+        border: 1px solid var(--purple-line);
+        border-radius: 10px;
+        background: rgba(4, 3, 7, 0.66);
+      }
+      .tabs button {
+        min-height: 48px;
+        border: 0;
+        border-radius: var(--radius);
+        color: var(--muted);
+        background: transparent;
+        font-weight: 900;
+      }
+      .tabs .active { color: #140b05; background: linear-gradient(180deg, var(--gold-light), var(--gold)); }
+      .search {
+        width: 100%;
+        min-height: 56px;
+        padding: 0 15px;
+        border: 1px solid rgba(241, 202, 99, 0.16);
+        border-radius: var(--radius);
+        color: var(--muted);
+        background: rgba(11, 7, 16, 0.94);
+        gap: 10px;
+        text-align: left;
+        font-weight: 850;
+      }
+      .filters { display: flex; gap: 7px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
+      .filters::-webkit-scrollbar { display: none; }
+      .filter {
+        min-height: 36px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid var(--purple-line);
+        color: var(--muted);
+        background: rgba(18, 6, 29, 0.92);
+        white-space: nowrap;
+        font-weight: 850;
+      }
+      .filter.active { color: #140b05; background: var(--gold); border-color: var(--gold-light); }
+      .results { display: grid; gap: 10px; }
+      .empty, .card {
+        padding: 16px;
+        border: 1px solid var(--purple-line);
+        border-radius: var(--radius);
+        background: rgba(11, 7, 16, 0.9);
+      }
+      .empty p, .meta, .muted { color: var(--muted); font-size: 14px; line-height: 1.4; }
+      .empty h2 { margin-bottom: 6px; }
+      .card {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(214, 162, 58, 0.12), transparent 34%),
+          linear-gradient(180deg, rgba(36, 16, 58, 0.96), rgba(7, 5, 11, 0.98));
+      }
+      .card-head { justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+      .badge {
+        border-radius: 999px;
+        padding: 7px 9px;
+        color: #140b05;
+        background: var(--gold);
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .price { margin: 11px 0; color: var(--gold-light); font-size: 32px; line-height: 1; font-weight: 950; }
+      .meta { flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+      .primary {
+        width: 100%;
+        min-height: 54px;
+        border: 1px solid rgba(241, 202, 99, 0.5);
+        border-radius: var(--radius);
+        color: #140b05;
+        background: linear-gradient(180deg, var(--gold-light), var(--gold));
+        font-weight: 950;
+      }
+      .bottom {
+        position: fixed;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
+        width: min(480px, 100%);
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        padding: 7px 9px max(7px, env(safe-area-inset-bottom));
+        border-top: 1px solid rgba(241, 202, 99, 0.16);
+        background: rgba(4, 3, 7, 0.97);
+        backdrop-filter: blur(18px);
+      }
+      .bottom a {
+        min-height: 52px;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 850;
+        text-decoration: none;
+      }
+      .bottom .active { color: var(--gold-light); }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div>
+          <h1>Работа рядом</h1>
+          <p class="subtitle" id="subtitle">Только реальные заказы</p>
+        </div>
+        <span class="pill">Защита</span>
+      </header>
+
+      <section class="tabs" aria-label="Выбор поиска">
+        <button id="jobsTab" class="active" type="button">Работа</button>
+        <button id="workersTab" type="button">Исполнители</button>
+      </section>
+
+      <button class="search" type="button" id="searchText">Что нужно сделать?</button>
+
+      <section class="filters" aria-label="Фильтры">
+        <button class="filter active" type="button">Рядом</button>
+        <button class="filter" type="button">Сегодня</button>
+        <button class="filter" type="button" id="trustFilter">Срочно</button>
+      </section>
+
+      <section class="results" id="results" aria-live="polite"></section>
+
+      <nav class="bottom" aria-label="Главное меню">
+        <a class="active">Найти</a>
+        <a>Создать</a>
+        <a>Мои</a>
+      </nav>
+    </main>
+
+    <script>
+      const config = {
+        apiUrl: ''
+      };
+      const tg = window.Telegram?.WebApp;
+      tg?.ready();
+      tg?.expand();
+
+      let mode = new URLSearchParams(window.location.search).get('mode') === 'workers' ? 'workers' : 'jobs';
+      const els = {
+        subtitle: document.getElementById('subtitle'),
+        search: document.getElementById('searchText'),
+        jobsTab: document.getElementById('jobsTab'),
+        workersTab: document.getElementById('workersTab'),
+        trustFilter: document.getElementById('trustFilter'),
+        results: document.getElementById('results')
+      };
+
+      function setMode(nextMode) {
+        mode = nextMode;
+        els.jobsTab.classList.toggle('active', mode === 'jobs');
+        els.workersTab.classList.toggle('active', mode === 'workers');
+        els.subtitle.textContent = mode === 'jobs' ? 'Только реальные заказы' : 'Только реальные исполнители';
+        els.search.textContent = mode === 'jobs' ? 'Что нужно сделать?' : 'Кого найти?';
+        els.trustFilter.textContent = mode === 'jobs' ? 'Срочно' : 'Проверенные';
+        load();
+      }
+
+      function empty(title, text) {
+        els.results.innerHTML = `<section class="empty"><h2>${title}</h2><p>${text}</p></section>`;
+      }
+
+      function card(item) {
+        const title = item.title || item.name || '';
+        const price = item.priceText ? `<div class="price">${item.priceText}</div>` : '';
+        const meta = [item.distanceText, item.dueText, item.responseTimeText].filter(Boolean).join(' · ');
+        return `
+          <article class="card">
+            <div class="card-head">${item.urgent ? '<span class="badge">Срочно</span>' : ''}</div>
+            <h2>${title}</h2>
+            ${price}
+            ${meta ? `<div class="meta">${meta}</div>` : ''}
+            <button class="primary" type="button">${mode === 'jobs' ? 'Откликнуться' : 'Выбрать'}</button>
+          </article>
+        `;
+      }
+
+      async function load() {
+        if (!config.apiUrl) {
+          empty(mode === 'jobs' ? 'Заказов пока нет' : 'Исполнителей пока нет', 'API еще не подключен к этому адресу.');
+          return;
+        }
+
+        empty('Загрузка', 'Получаю реальные данные.');
+        try {
+          const path = mode === 'jobs' ? '/v1/jobs/nearby' : '/v1/workers/nearby';
+          const response = await fetch(`${config.apiUrl.replace(/\/$/, '')}${path}`, { signal: AbortSignal.timeout(7000) });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          const items = Array.isArray(data.items) ? data.items : [];
+          if (items.length === 0) {
+            empty(mode === 'jobs' ? 'Заказов пока нет' : 'Исполнителей пока нет', 'Когда появятся реальные данные, они будут здесь.');
+            return;
+          }
+          els.results.innerHTML = items.map(card).join('');
+        } catch {
+          empty('Нет связи с API', 'Данные не подменяются примерами.');
+        }
+      }
+
+      els.jobsTab.addEventListener('click', () => setMode('jobs'));
+      els.workersTab.addEventListener('click', () => setMode('workers'));
+      setMode(mode);
+    </script>
+  </body>
+</html>
