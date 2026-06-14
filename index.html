@@ -217,13 +217,22 @@
       }
 
       function empty(title, text) {
-        els.results.innerHTML = `<section class="empty"><h2>${title}</h2><p>${text}</p></section>`;
+        els.results.innerHTML = `<section class="empty"><h2>${escapeHtml(title)}</h2><p>${escapeHtml(text)}</p></section>`;
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
       }
 
       function card(item) {
-        const title = item.title || item.name || '';
-        const price = item.priceText ? `<div class="price">${item.priceText}</div>` : '';
-        const meta = [item.distanceText, item.dueText, item.responseTimeText].filter(Boolean).join(' · ');
+        const title = escapeHtml(item.title || item.name || '');
+        const price = item.priceText ? `<div class="price">${escapeHtml(item.priceText)}</div>` : '';
+        const meta = [item.distanceText, item.dueText, item.responseTimeText].filter(Boolean).map(escapeHtml).join(' · ');
         return `
           <article class="card">
             <div class="card-head">${item.urgent ? '<span class="badge">Срочно</span>' : ''}</div>
