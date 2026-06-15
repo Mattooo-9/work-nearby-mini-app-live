@@ -196,6 +196,7 @@
         find: { text: '', category: 'Дом', format: 'near', trust: 'any' },
         order: { description: '', category: 'Дом', location: '', budget: '', urgency: 'today', format: 'near' },
         workers: [],
+        findSubmitted: false,
         publishedOrder: null,
         status: ''
       };
@@ -224,16 +225,6 @@
         }
       }
 
-      function workersFor(form) {
-        const distance = form.format === 'near' ? ['0.8 км', '1.6 км', '2.4 км'] : ['Удалённо', 'Удалённо', 'Удалённо'];
-        const trust = form.trust === 'verified' ? 'Проверенный' : 'Базовый';
-        return [
-          { id: 'nearby-worker-1', name: form.trust === 'verified' ? 'verified_pro' : 'nearby_master', category: form.category, distance: distance[0], rating: '4.9', priceFrom: form.category === 'Фриланс' ? 'от 900 грн' : 'от 500 грн', trustBadge: trust },
-          { id: 'nearby-worker-2', name: 'fast_helper', category: form.category, distance: distance[1], rating: '4.8', priceFrom: form.category === 'Срочно' ? 'от 700 грн' : 'от 450 грн', trustBadge: trust },
-          { id: 'nearby-worker-3', name: 'new_worker', category: form.category, distance: distance[2], rating: 'новый', priceFrom: 'договорная', trustBadge: form.trust === 'verified' ? 'Фото и телефон' : 'Новичок' }
-        ];
-      }
-
       function field(label, inner) {
         return `<section class="field"><span>${escapeHtml(label)}</span>${inner}</section>`;
       }
@@ -259,10 +250,10 @@
           <article class="card">
             <div><h2>${escapeHtml(worker.name)}</h2><p>${escapeHtml(worker.category)}</p></div>
             <div class="meta">
-              <span>${escapeHtml(worker.distance)}</span>
-              <span>★ ${escapeHtml(worker.rating)}</span>
-              <span>${escapeHtml(worker.priceFrom)}</span>
-              <span class="trust">${escapeHtml(worker.trustBadge)}</span>
+              ${worker.distance ? `<span>${escapeHtml(worker.distance)}</span>` : ''}
+              ${worker.rating ? `<span>★ ${escapeHtml(worker.rating)}</span>` : ''}
+              ${worker.priceFrom ? `<span>${escapeHtml(worker.priceFrom)}</span>` : ''}
+              ${worker.trustBadge ? `<span class="trust">${escapeHtml(worker.trustBadge)}</span>` : ''}
             </div>
             <button class="btn safe" type="button" data-worker="${escapeHtml(worker.id)}">Выбрать</button>
           </article>
@@ -288,14 +279,14 @@
         return `
           <section class="screen">
             <h1>Найти исполнителя</h1>
-            ${field('Что нужно сделать?', `<textarea data-input="find.text" maxlength="240" placeholder="Например: доставить, починить, убрать">${escapeHtml(form.text)}</textarea>`)}
+            ${field('Что нужно сделать?', `<textarea data-input="find.text" maxlength="240" placeholder="Опишите задачу">${escapeHtml(form.text)}</textarea>`)}
             ${field('Категория', chips(form.category, 'find-category'))}
             ${field('Формат', segmented([{ value: 'near', label: 'Рядом' }, { value: 'remote', label: 'Удалённо' }], form.format, 'find-format'))}
             ${field('Уровень доверия', segmented([{ value: 'any', label: 'Любой' }, { value: 'verified', label: 'Проверенный' }], form.trust, 'find-trust'))}
             <button class="btn" type="button" data-action="find">Найти</button>
             <p class="status ${state.status === 'Откройте через Telegram' ? 'alert' : ''}">${escapeHtml(state.status)}</p>
             <section class="results">
-              ${state.workers.length ? state.workers.map(workerCard).join('') : empty('Исполнители появятся здесь', 'Выберите параметры и нажмите «Найти».')}
+              ${state.workers.length ? state.workers.map(workerCard).join('') : empty(state.findSubmitted ? 'Реальных исполнителей пока нет' : 'Исполнители появятся здесь', state.findSubmitted ? 'Запрос отправлен. Здесь будут только реальные исполнители и отклики.' : 'Выберите параметры и нажмите «Найти».')}
             </section>
           </section>
         `;
@@ -309,12 +300,12 @@
             ${field('Описание задачи', `<textarea data-input="order.description" maxlength="320" placeholder="Что нужно сделать?">${escapeHtml(form.description)}</textarea>`)}
             ${field('Категория', chips(form.category, 'order-category'))}
             ${field('Локация', `<input data-input="order.location" value="${escapeHtml(form.location)}" placeholder="Город или район" />`)}
-            ${field('Бюджет', `<input data-input="order.budget" value="${escapeHtml(form.budget)}" inputmode="numeric" placeholder="Например: 800 грн" />`)}
+            ${field('Бюджет', `<input data-input="order.budget" value="${escapeHtml(form.budget)}" inputmode="numeric" placeholder="Введите бюджет" />`)}
             ${field('Срочность', segmented([{ value: 'today', label: 'Сегодня' }, { value: 'week', label: 'На неделе' }], form.urgency, 'order-urgency'))}
             ${field('Формат', segmented([{ value: 'near', label: 'Рядом' }, { value: 'remote', label: 'Удалённо' }], form.format, 'order-format'))}
             <button class="btn" type="button" data-action="publish">Опубликовать заказ</button>
             <p class="status ${state.status === 'Откройте через Telegram' ? 'alert' : ''}">${escapeHtml(state.status)}</p>
-            ${state.publishedOrder ? orderCard(state.publishedOrder) : ''}
+            ${state.publishedOrder ? `${orderCard(state.publishedOrder)}<button class="btn safe" type="button" data-action="payment">Оплатить безопасно</button>` : ''}
           </section>
         `;
       }
@@ -360,8 +351,14 @@
       }
 
       function runFind() {
-        state.workers = workersFor(state.find);
-        send('find_workers', { ...state.find, resultCount: state.workers.length });
+        if (!state.find.text.trim()) {
+          state.status = 'Введите задачу';
+          render();
+          return;
+        }
+        state.findSubmitted = true;
+        state.workers = [];
+        send('find_workers', { ...state.find, resultCount: 0 });
         render();
       }
 
@@ -373,16 +370,36 @@
       }
 
       function publishOrder() {
+        if (!state.order.description.trim()) {
+          state.status = 'Введите описание задачи';
+          render();
+          return;
+        }
         const order = {
           id: `order-${Date.now()}`,
-          title: state.order.description.trim() || 'Новый заказ',
+          title: state.order.description.trim(),
           category: state.order.category,
-          budget: state.order.budget.trim() || 'договорная',
-          location: state.order.format === 'remote' ? 'Удалённо' : state.order.location.trim() || 'Рядом',
+          budget: state.order.budget.trim() || 'Бюджет не указан',
+          location: state.order.format === 'remote' ? 'Удалённо' : state.order.location.trim() || 'Локация не указана',
           urgency: state.order.urgency === 'today' ? 'Сегодня' : 'На этой неделе'
         };
         state.publishedOrder = order;
         send('publish_order', { ...state.order, order });
+        render();
+      }
+
+      function requestPayment() {
+        if (!state.publishedOrder) {
+          state.status = 'Сначала опубликуйте заказ';
+          render();
+          return;
+        }
+        if (!state.order.budget.trim()) {
+          state.status = 'Укажите бюджет для оплаты';
+          render();
+          return;
+        }
+        send('request_payment', { order: state.publishedOrder, budget: state.order.budget.trim(), escrow: true });
         render();
       }
 
@@ -401,40 +418,68 @@
       document.addEventListener('click', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
+        const control = target.closest('[data-tab], [data-find-category], [data-find-format], [data-find-trust], [data-order-category], [data-order-urgency], [data-order-format], [data-action], [data-worker], [data-section]');
+        if (!(control instanceof HTMLElement)) return;
 
-        if (target.dataset.tab) {
-          state.tab = target.dataset.tab;
+        if (control.dataset.tab) {
+          state.tab = control.dataset.tab;
           state.status = '';
           render();
           return;
         }
 
-        if (target.dataset.findCategory) state.find.category = target.dataset.findCategory;
-        if (target.dataset.findFormat) state.find.format = target.dataset.findFormat;
-        if (target.dataset.findTrust) state.find.trust = target.dataset.findTrust;
-        if (target.dataset.orderCategory) state.order.category = target.dataset.orderCategory;
-        if (target.dataset.orderUrgency) state.order.urgency = target.dataset.orderUrgency;
-        if (target.dataset.orderFormat) state.order.format = target.dataset.orderFormat;
-
-        if (target.dataset.action === 'find') {
-          runFind();
+        if (control.dataset.findCategory) {
+          state.find.category = control.dataset.findCategory;
+          render();
           return;
         }
-        if (target.dataset.action === 'publish') {
-          publishOrder();
+        if (control.dataset.findFormat) {
+          state.find.format = control.dataset.findFormat;
+          render();
           return;
         }
-        if (target.dataset.worker) {
-          selectWorker(target.dataset.worker);
+        if (control.dataset.findTrust) {
+          state.find.trust = control.dataset.findTrust;
+          render();
           return;
         }
-        if (target.dataset.section) {
-          send('open_profile_section', { section: target.dataset.section });
+        if (control.dataset.orderCategory) {
+          state.order.category = control.dataset.orderCategory;
+          render();
+          return;
+        }
+        if (control.dataset.orderUrgency) {
+          state.order.urgency = control.dataset.orderUrgency;
+          render();
+          return;
+        }
+        if (control.dataset.orderFormat) {
+          state.order.format = control.dataset.orderFormat;
           render();
           return;
         }
 
-        render();
+        if (control.dataset.action === 'find') {
+          runFind();
+          return;
+        }
+        if (control.dataset.action === 'publish') {
+          publishOrder();
+          return;
+        }
+        if (control.dataset.action === 'payment') {
+          requestPayment();
+          return;
+        }
+        if (control.dataset.worker) {
+          selectWorker(control.dataset.worker);
+          return;
+        }
+        if (control.dataset.section) {
+          send('open_profile_section', { section: control.dataset.section });
+          render();
+          return;
+        }
       });
 
       tg?.MainButton?.onClick(runMainAction);
