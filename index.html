@@ -10,128 +10,178 @@
       :root {
         --black: #040307;
         --panel: #0b0710;
-        --purple-deep: #12061d;
-        --purple-line: rgba(148, 98, 214, 0.26);
+        --panel-2: #12061d;
+        --line: rgba(148, 98, 214, 0.28);
         --gold: #d6a23a;
         --gold-light: #f1ca63;
-        --green-deep: #071d13;
+        --green: #071d13;
+        --green-line: rgba(128, 223, 164, 0.26);
         --text: #fff8ea;
         --muted: #b9adc8;
+        --danger: #ffcd9b;
         --radius: 8px;
         color: var(--text);
         background: var(--black);
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
+
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--black); }
-      button { cursor: pointer; font: inherit; }
-      h1, h2, p { margin: 0; }
+      button, textarea { font: inherit; }
+      button { cursor: pointer; }
+      h1, p { margin: 0; }
+
       .app {
-        max-width: 480px;
+        width: min(480px, 100%);
         min-height: 100vh;
         margin: 0 auto;
-        padding: 16px 14px 78px;
+        padding: 16px 14px 84px;
         background:
-          radial-gradient(circle at 20% 0%, rgba(86, 35, 150, 0.34), transparent 30%),
-          linear-gradient(180deg, var(--purple-deep), var(--black) 58%);
+          radial-gradient(circle at 18% 0%, rgba(86, 35, 150, 0.34), transparent 31%),
+          linear-gradient(180deg, #12061d 0%, #040307 62%);
       }
-      .topbar, .row, .pill, .search, .card-head, .meta, .bottom a {
+
+      .topbar {
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
       }
-      .topbar { justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-      h1 { font-size: 28px; line-height: 1.05; }
-      h2 { font-size: 22px; line-height: 1.12; }
-      .subtitle { margin-top: 4px; color: var(--muted); font-size: 14px; font-weight: 700; }
-      .pill {
-        gap: 6px;
-        white-space: nowrap;
+
+      h1 { font-size: 28px; line-height: 1.05; letter-spacing: 0; }
+      .subtitle { margin-top: 5px; color: var(--muted); font-size: 14px; font-weight: 760; }
+
+      .safe {
+        flex: 0 0 auto;
+        border: 1px solid var(--green-line);
         border-radius: 999px;
         padding: 8px 10px;
         color: #dff8ea;
-        background: var(--green-deep);
-        border: 1px solid rgba(128, 223, 164, 0.25);
+        background: var(--green);
         font-size: 13px;
-        font-weight: 850;
+        font-weight: 900;
       }
+
       .tabs {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 6px;
         padding: 4px;
-        margin-bottom: 10px;
-        border: 1px solid var(--purple-line);
+        margin-bottom: 12px;
+        border: 1px solid var(--line);
         border-radius: 10px;
-        background: rgba(4, 3, 7, 0.66);
+        background: rgba(4, 3, 7, 0.7);
       }
+
       .tabs button {
-        min-height: 48px;
+        min-height: 50px;
         border: 0;
         border-radius: var(--radius);
         color: var(--muted);
         background: transparent;
-        font-weight: 900;
+        font-weight: 920;
       }
-      .tabs .active { color: #140b05; background: linear-gradient(180deg, var(--gold-light), var(--gold)); }
-      .search {
-        width: 100%;
-        min-height: 56px;
-        padding: 0 15px;
-        border: 1px solid rgba(241, 202, 99, 0.16);
-        border-radius: var(--radius);
-        color: var(--muted);
-        background: rgba(11, 7, 16, 0.94);
-        gap: 10px;
-        text-align: left;
-        font-weight: 850;
-      }
-      .filters { display: flex; gap: 7px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
-      .filters::-webkit-scrollbar { display: none; }
-      .filter {
-        min-height: 36px;
-        padding: 0 12px;
-        border-radius: 999px;
-        border: 1px solid var(--purple-line);
-        color: var(--muted);
-        background: rgba(18, 6, 29, 0.92);
-        white-space: nowrap;
-        font-weight: 850;
-      }
-      .filter.active { color: #140b05; background: var(--gold); border-color: var(--gold-light); }
-      .results { display: grid; gap: 10px; }
-      .empty, .card {
-        padding: 16px;
-        border: 1px solid var(--purple-line);
-        border-radius: var(--radius);
-        background: rgba(11, 7, 16, 0.9);
-      }
-      .empty p, .meta, .muted { color: var(--muted); font-size: 14px; line-height: 1.4; }
-      .empty h2 { margin-bottom: 6px; }
-      .card {
-        background:
-          radial-gradient(circle at 100% 0%, rgba(214, 162, 58, 0.12), transparent 34%),
-          linear-gradient(180deg, rgba(36, 16, 58, 0.96), rgba(7, 5, 11, 0.98));
-      }
-      .card-head { justify-content: space-between; gap: 8px; margin-bottom: 10px; }
-      .badge {
-        border-radius: 999px;
-        padding: 7px 9px;
-        color: #140b05;
-        background: var(--gold);
-        font-size: 12px;
-        font-weight: 900;
-      }
-      .price { margin: 11px 0; color: var(--gold-light); font-size: 32px; line-height: 1; font-weight: 950; }
-      .meta { flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-      .primary {
-        width: 100%;
-        min-height: 54px;
-        border: 1px solid rgba(241, 202, 99, 0.5);
-        border-radius: var(--radius);
+
+      .tabs button.active {
         color: #140b05;
         background: linear-gradient(180deg, var(--gold-light), var(--gold));
-        font-weight: 950;
       }
+
+      .panel {
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background:
+          radial-gradient(circle at 100% 0%, rgba(214, 162, 58, 0.12), transparent 36%),
+          linear-gradient(180deg, rgba(22, 8, 36, 0.98), rgba(7, 5, 11, 0.98));
+      }
+
+      .label { color: var(--text); font-size: 18px; font-weight: 950; }
+
+      textarea {
+        width: 100%;
+        min-height: 96px;
+        resize: none;
+        border: 1px solid rgba(241, 202, 99, 0.18);
+        border-radius: var(--radius);
+        padding: 13px;
+        color: var(--text);
+        outline: none;
+        background: rgba(4, 3, 7, 0.74);
+      }
+
+      textarea::placeholder { color: #847891; }
+      textarea:focus { border-color: rgba(241, 202, 99, 0.62); }
+
+      .chips {
+        display: flex;
+        gap: 7px;
+        overflow-x: auto;
+        padding-bottom: 1px;
+        scrollbar-width: none;
+      }
+
+      .chips::-webkit-scrollbar { display: none; }
+
+      .chip, .choice {
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        background: rgba(18, 6, 29, 0.92);
+        font-weight: 880;
+        white-space: nowrap;
+      }
+
+      .chip { padding: 0 12px; }
+
+      .chip.active, .choice.active {
+        color: #140b05;
+        border-color: var(--gold-light);
+        background: var(--gold);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .choice {
+        min-height: 44px;
+        border-radius: var(--radius);
+      }
+
+      .primary, .secondary {
+        min-height: 56px;
+        border-radius: var(--radius);
+        font-weight: 970;
+      }
+
+      .primary {
+        border: 1px solid rgba(241, 202, 99, 0.58);
+        color: #140b05;
+        background: linear-gradient(180deg, var(--gold-light), var(--gold));
+      }
+
+      .secondary {
+        border: 1px solid var(--green-line);
+        color: #dff8ea;
+        background: var(--green);
+      }
+
+      .status {
+        min-height: 22px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.35;
+      }
+
+      .status.alert { color: var(--danger); }
+
       .bottom {
         position: fixed;
         left: 50%;
@@ -145,15 +195,17 @@
         background: rgba(4, 3, 7, 0.97);
         backdrop-filter: blur(18px);
       }
-      .bottom a {
+
+      .bottom button {
         min-height: 52px;
-        justify-content: center;
+        border: 0;
         color: var(--muted);
+        background: transparent;
         font-size: 12px;
-        font-weight: 850;
-        text-decoration: none;
+        font-weight: 880;
       }
-      .bottom .active { color: var(--gold-light); }
+
+      .bottom button.active { color: var(--gold-light); }
     </style>
   </head>
   <body>
@@ -161,64 +213,68 @@
       <header class="topbar">
         <div>
           <h1>Работа рядом</h1>
-          <p class="subtitle" id="subtitle">Только реальные заказы</p>
+          <p class="subtitle" id="subtitle">Найти человека или работу рядом</p>
         </div>
-        <span class="pill">Защита</span>
+        <span class="safe">Защита</span>
       </header>
 
-      <section class="tabs" aria-label="Выбор поиска">
-        <button id="jobsTab" class="active" type="button">Работа</button>
-        <button id="workersTab" type="button">Исполнители</button>
+      <section class="tabs" aria-label="Режим">
+        <button id="customerTab" class="active" type="button">Нужен исполнитель</button>
+        <button id="workerTab" type="button">Ищу работу</button>
       </section>
 
-      <button class="search" type="button" id="searchText">Что нужно сделать?</button>
+      <section class="panel">
+        <label class="label" for="query" id="queryLabel">Что нужно сделать?</label>
+        <textarea id="query" autocomplete="off" maxlength="240" placeholder="Коротко опишите задачу"></textarea>
 
-      <section class="filters" aria-label="Фильтры">
-        <button class="filter active" type="button">Рядом</button>
-        <button class="filter" type="button">Сегодня</button>
-        <button class="filter" type="button" id="trustFilter">Срочно</button>
+        <section class="chips" aria-label="Категории" id="categoryChips"></section>
+
+        <section class="grid" aria-label="Формат">
+          <button class="choice active" type="button" data-scope="near">Рядом</button>
+          <button class="choice" type="button" data-scope="remote">Удалённо</button>
+        </section>
+
+        <section class="grid" aria-label="Доверие">
+          <button class="choice active" type="button" data-trust="any">Любой опыт</button>
+          <button class="choice" type="button" data-trust="verified">Проверенный</button>
+        </section>
+
+        <button class="primary" type="button" id="primaryAction">Найти исполнителя</button>
+        <button class="secondary" type="button" id="secondaryAction">Создать заказ</button>
+        <p class="status" id="status" aria-live="polite"></p>
       </section>
-
-      <section class="results" id="results" aria-live="polite"></section>
 
       <nav class="bottom" aria-label="Главное меню">
-        <a class="active">Найти</a>
-        <a>Создать</a>
-        <a>Мои</a>
+        <button class="active" type="button" data-nav="find">Найти</button>
+        <button type="button" data-nav="create">Создать</button>
+        <button type="button" data-nav="mine">Мои</button>
       </nav>
     </main>
 
     <script>
-      const config = {
-        apiUrl: ''
-      };
       const tg = window.Telegram?.WebApp;
       tg?.ready();
       tg?.expand();
 
-      let mode = new URLSearchParams(window.location.search).get('mode') === 'workers' ? 'workers' : 'jobs';
-      const els = {
-        subtitle: document.getElementById('subtitle'),
-        search: document.getElementById('searchText'),
-        jobsTab: document.getElementById('jobsTab'),
-        workersTab: document.getElementById('workersTab'),
-        trustFilter: document.getElementById('trustFilter'),
-        results: document.getElementById('results')
+      const categories = ['Дом', 'Ремонт', 'Доставка', 'Уборка', 'Красота', 'Фриланс', 'Срочно'];
+      const state = {
+        mode: new URLSearchParams(window.location.search).get('mode') === 'workers' ? 'worker' : 'customer',
+        category: categories[0],
+        scope: 'near',
+        trust: 'any'
       };
 
-      function setMode(nextMode) {
-        mode = nextMode;
-        els.jobsTab.classList.toggle('active', mode === 'jobs');
-        els.workersTab.classList.toggle('active', mode === 'workers');
-        els.subtitle.textContent = mode === 'jobs' ? 'Только реальные заказы' : 'Только реальные исполнители';
-        els.search.textContent = mode === 'jobs' ? 'Что нужно сделать?' : 'Кого найти?';
-        els.trustFilter.textContent = mode === 'jobs' ? 'Срочно' : 'Проверенные';
-        load();
-      }
-
-      function empty(title, text) {
-        els.results.innerHTML = `<section class="empty"><h2>${escapeHtml(title)}</h2><p>${escapeHtml(text)}</p></section>`;
-      }
+      const els = {
+        subtitle: document.getElementById('subtitle'),
+        customerTab: document.getElementById('customerTab'),
+        workerTab: document.getElementById('workerTab'),
+        queryLabel: document.getElementById('queryLabel'),
+        query: document.getElementById('query'),
+        categoryChips: document.getElementById('categoryChips'),
+        primary: document.getElementById('primaryAction'),
+        secondary: document.getElementById('secondaryAction'),
+        status: document.getElementById('status')
+      };
 
       function escapeHtml(value) {
         return String(value)
@@ -229,47 +285,98 @@
           .replaceAll("'", '&#39;');
       }
 
-      function card(item) {
-        const title = escapeHtml(item.title || item.name || '');
-        const price = item.priceText ? `<div class="price">${escapeHtml(item.priceText)}</div>` : '';
-        const meta = [item.distanceText, item.dueText, item.responseTimeText].filter(Boolean).map(escapeHtml).join(' · ');
-        return `
-          <article class="card">
-            <div class="card-head">${item.urgent ? '<span class="badge">Срочно</span>' : ''}</div>
-            <h2>${title}</h2>
-            ${price}
-            ${meta ? `<div class="meta">${meta}</div>` : ''}
-            <button class="primary" type="button">${mode === 'jobs' ? 'Откликнуться' : 'Выбрать'}</button>
-          </article>
-        `;
+      function renderCategories() {
+        els.categoryChips.innerHTML = categories.map((category) => (
+          `<button class="chip ${category === state.category ? 'active' : ''}" type="button" data-category="${escapeHtml(category)}">${escapeHtml(category)}</button>`
+        )).join('');
       }
 
-      async function load() {
-        if (!config.apiUrl) {
-          empty(mode === 'jobs' ? 'Заказов пока нет' : 'Исполнителей пока нет', 'API еще не подключен к этому адресу.');
+      function setMode(mode) {
+        state.mode = mode;
+        els.customerTab.classList.toggle('active', mode === 'customer');
+        els.workerTab.classList.toggle('active', mode === 'worker');
+        els.subtitle.textContent = mode === 'customer' ? 'Найти исполнителя рядом' : 'Найти работу рядом';
+        els.queryLabel.textContent = mode === 'customer' ? 'Что нужно сделать?' : 'Какую работу ищете?';
+        els.query.placeholder = mode === 'customer' ? 'Коротко опишите задачу' : 'Коротко опишите навык или работу';
+        els.primary.textContent = mode === 'customer' ? 'Найти исполнителя' : 'Найти работу';
+        els.secondary.textContent = mode === 'customer' ? 'Создать заказ' : 'Стать исполнителем';
+        els.status.textContent = '';
+        updateMainButton();
+      }
+
+      function payload(action) {
+        return {
+          source: 'mini_app',
+          action,
+          role: state.mode,
+          category: state.category,
+          scope: state.scope,
+          trust: state.trust,
+          text: els.query.value.trim(),
+          at: new Date().toISOString()
+        };
+      }
+
+      function submit(action) {
+        const data = payload(action);
+        localStorage.setItem('work_nearby_last_intent', JSON.stringify(data));
+
+        if (tg?.sendData) {
+          tg.sendData(JSON.stringify(data));
+          els.status.className = 'status';
+          els.status.textContent = 'Отправлено в Telegram';
           return;
         }
 
-        empty('Загрузка', 'Получаю реальные данные.');
-        try {
-          const path = mode === 'jobs' ? '/v1/jobs/nearby' : '/v1/workers/nearby';
-          const response = await fetch(`${config.apiUrl.replace(/\/$/, '')}${path}`, { signal: AbortSignal.timeout(7000) });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const data = await response.json();
-          const items = Array.isArray(data.items) ? data.items : [];
-          if (items.length === 0) {
-            empty(mode === 'jobs' ? 'Заказов пока нет' : 'Исполнителей пока нет', 'Когда появятся реальные данные, они будут здесь.');
-            return;
-          }
-          els.results.innerHTML = items.map(card).join('');
-        } catch {
-          empty('Нет связи с API', 'Данные не подменяются примерами.');
-        }
+        els.status.className = 'status alert';
+        els.status.textContent = 'Откройте через Telegram';
       }
 
-      els.jobsTab.addEventListener('click', () => setMode('jobs'));
-      els.workersTab.addEventListener('click', () => setMode('workers'));
-      setMode(mode);
+      function updateMainButton() {
+        if (!tg?.MainButton) return;
+        tg.MainButton.setText(state.mode === 'customer' ? 'Найти исполнителя' : 'Найти работу');
+        tg.MainButton.show();
+      }
+
+      els.customerTab.addEventListener('click', () => setMode('customer'));
+      els.workerTab.addEventListener('click', () => setMode('worker'));
+      els.primary.addEventListener('click', () => submit('find'));
+      els.secondary.addEventListener('click', () => submit(state.mode === 'customer' ? 'create_order' : 'create_worker_profile'));
+
+      document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+
+        const category = target.dataset.category;
+        if (category) {
+          state.category = category;
+          renderCategories();
+          return;
+        }
+
+        const scope = target.dataset.scope;
+        if (scope) {
+          state.scope = scope;
+          document.querySelectorAll('[data-scope]').forEach((button) => button.classList.toggle('active', button === target));
+          return;
+        }
+
+        const trust = target.dataset.trust;
+        if (trust) {
+          state.trust = trust;
+          document.querySelectorAll('[data-trust]').forEach((button) => button.classList.toggle('active', button === target));
+          return;
+        }
+
+        const nav = target.dataset.nav;
+        if (nav === 'create') {
+          submit(state.mode === 'customer' ? 'create_order' : 'create_worker_profile');
+        }
+      });
+
+      tg?.MainButton?.onClick(() => submit('find'));
+      renderCategories();
+      setMode(state.mode);
     </script>
   </body>
 </html>
