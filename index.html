@@ -69,8 +69,7 @@
       input::placeholder, textarea::placeholder { color: #847891; }
       input:focus, textarea:focus { border-color: rgba(241, 202, 99, 0.62); }
 
-      .chips { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
-      .chips::-webkit-scrollbar { display: none; }
+      .chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
 
       .chip, .segmented button {
         min-height: 40px;
@@ -80,7 +79,7 @@
         font-weight: 850;
       }
 
-      .chip { flex: 0 0 auto; border-radius: 999px; padding: 0 12px; }
+      .chip { width: 100%; min-width: 0; border-radius: var(--radius); padding: 0 12px; white-space: normal; }
       .chip.active, .segmented button.active {
         color: #140b05;
         border-color: var(--gold-light);
