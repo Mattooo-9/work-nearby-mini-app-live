@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Работа рядом</title>
+    <title>Nearby | Рядом</title>
     <meta name="theme-color" content="#040307" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
@@ -12,6 +12,7 @@
         --panel: #0b0710;
         --panel-2: #12061d;
         --line: rgba(148, 98, 214, 0.28);
+        --line-soft: rgba(241, 202, 99, 0.16);
         --gold: #d6a23a;
         --gold-light: #f1ca63;
         --green: #071d13;
@@ -19,6 +20,7 @@
         --text: #fff8ea;
         --muted: #b9adc8;
         --danger: #ffcd9b;
+        --nav-height: 72px;
         --radius: 8px;
         color: var(--text);
         background: var(--black);
@@ -26,85 +28,35 @@
       }
 
       * { box-sizing: border-box; }
-      body { margin: 0; background: var(--black); }
-      button, textarea { font: inherit; }
+      html, body { min-height: 100%; margin: 0; overflow: hidden; background: var(--black); }
+      button, input, textarea { font: inherit; }
       button { cursor: pointer; }
-      h1, p { margin: 0; }
+      h1, h2, p { margin: 0; }
 
       .app {
+        position: relative;
         width: min(480px, 100%);
+        height: var(--tg-viewport-height, 100vh);
         min-height: 100vh;
         margin: 0 auto;
-        padding: 16px 14px 84px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        padding: 16px 14px calc(var(--nav-height) + 28px + env(safe-area-inset-bottom));
         background:
-          radial-gradient(circle at 18% 0%, rgba(86, 35, 150, 0.34), transparent 31%),
-          linear-gradient(180deg, #12061d 0%, #040307 62%);
+          radial-gradient(circle at 18% 0%, rgba(86, 35, 150, 0.28), transparent 30%),
+          linear-gradient(180deg, var(--panel-2), var(--black) 58%);
       }
 
-      .topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 14px;
-      }
+      .screen { display: grid; gap: 12px; min-height: calc(var(--tg-viewport-height, 100vh) - var(--nav-height)); }
+      h1 { font-size: 28px; line-height: 1.08; letter-spacing: 0; }
+      h2 { font-size: 18px; line-height: 1.15; letter-spacing: 0; }
 
-      h1 { font-size: 28px; line-height: 1.05; letter-spacing: 0; }
-      .subtitle { margin-top: 5px; color: var(--muted); font-size: 14px; font-weight: 760; }
+      .field { display: grid; gap: 7px; }
+      .field > span { color: var(--text); font-size: 15px; font-weight: 850; }
 
-      .safe {
-        flex: 0 0 auto;
-        border: 1px solid var(--green-line);
-        border-radius: 999px;
-        padding: 8px 10px;
-        color: #dff8ea;
-        background: var(--green);
-        font-size: 13px;
-        font-weight: 900;
-      }
-
-      .tabs {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 6px;
-        padding: 4px;
-        margin-bottom: 12px;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: rgba(4, 3, 7, 0.7);
-      }
-
-      .tabs button {
-        min-height: 50px;
-        border: 0;
-        border-radius: var(--radius);
-        color: var(--muted);
-        background: transparent;
-        font-weight: 920;
-      }
-
-      .tabs button.active {
-        color: #140b05;
-        background: linear-gradient(180deg, var(--gold-light), var(--gold));
-      }
-
-      .panel {
-        display: grid;
-        gap: 12px;
-        padding: 14px;
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        background:
-          radial-gradient(circle at 100% 0%, rgba(214, 162, 58, 0.12), transparent 36%),
-          linear-gradient(180deg, rgba(22, 8, 36, 0.98), rgba(7, 5, 11, 0.98));
-      }
-
-      .label { color: var(--text); font-size: 18px; font-weight: 950; }
-
-      textarea {
+      input, textarea {
         width: 100%;
-        min-height: 96px;
-        resize: none;
         border: 1px solid rgba(241, 202, 99, 0.18);
         border-radius: var(--radius);
         padding: 13px;
@@ -113,143 +65,125 @@
         background: rgba(4, 3, 7, 0.74);
       }
 
-      textarea::placeholder { color: #847891; }
-      textarea:focus { border-color: rgba(241, 202, 99, 0.62); }
+      textarea { min-height: 100px; resize: vertical; }
+      input::placeholder, textarea::placeholder { color: #847891; }
+      input:focus, textarea:focus { border-color: rgba(241, 202, 99, 0.62); }
 
-      .chips {
-        display: flex;
-        gap: 7px;
-        overflow-x: auto;
-        padding-bottom: 1px;
-        scrollbar-width: none;
-      }
-
+      .chips { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
       .chips::-webkit-scrollbar { display: none; }
 
-      .chip, .choice {
-        min-height: 38px;
+      .chip, .segmented button {
+        min-height: 40px;
         border: 1px solid var(--line);
-        border-radius: 999px;
         color: var(--muted);
-        background: rgba(18, 6, 29, 0.92);
-        font-weight: 880;
-        white-space: nowrap;
+        background: rgba(18, 6, 29, 0.9);
+        font-weight: 850;
       }
 
-      .chip { padding: 0 12px; }
-
-      .chip.active, .choice.active {
+      .chip { flex: 0 0 auto; border-radius: 999px; padding: 0 12px; }
+      .chip.active, .segmented button.active {
         color: #140b05;
         border-color: var(--gold-light);
         background: var(--gold);
       }
 
-      .grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-      }
+      .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .segmented button { border-radius: var(--radius); }
 
-      .choice {
-        min-height: 44px;
+      .btn {
+        width: 100%;
+        min-height: 54px;
         border-radius: var(--radius);
-      }
-
-      .primary, .secondary {
-        min-height: 56px;
-        border-radius: var(--radius);
-        font-weight: 970;
-      }
-
-      .primary {
         border: 1px solid rgba(241, 202, 99, 0.58);
         color: #140b05;
         background: linear-gradient(180deg, var(--gold-light), var(--gold));
+        font-weight: 950;
       }
 
-      .secondary {
-        border: 1px solid var(--green-line);
+      .btn.safe {
+        border-color: var(--green-line);
         color: #dff8ea;
         background: var(--green);
       }
 
-      .status {
-        min-height: 22px;
-        color: var(--muted);
-        font-size: 14px;
-        line-height: 1.35;
+      .status { min-height: 20px; color: var(--muted); font-size: 14px; line-height: 1.35; }
+      .status.alert { color: var(--danger); }
+      .results, .menu-list { display: grid; gap: 10px; }
+
+      .card, .empty {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(11, 7, 16, 0.9);
       }
 
-      .status.alert { color: var(--danger); }
+      .card { display: grid; gap: 11px; padding: 14px; }
+      .card p, .empty p, .meta span, .menu-list small { color: var(--muted); font-size: 14px; line-height: 1.35; }
+
+      .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .meta span {
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+        padding: 8px 9px;
+        border: 1px solid rgba(241, 202, 99, 0.12);
+        border-radius: var(--radius);
+        background: rgba(4, 3, 7, 0.4);
+      }
+
+      .meta .trust { color: #dff8ea; border-color: var(--green-line); }
+      .empty { display: grid; gap: 6px; padding: 16px; }
+
+      .menu-list button {
+        min-height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 0 13px;
+        color: var(--text);
+        background: rgba(11, 7, 16, 0.9);
+        text-align: left;
+        font-weight: 880;
+      }
 
       .bottom {
         position: fixed;
         left: 50%;
         bottom: 0;
+        z-index: 10;
         transform: translateX(-50%);
         width: min(480px, 100%);
+        height: calc(var(--nav-height) + env(safe-area-inset-bottom));
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         padding: 7px 9px max(7px, env(safe-area-inset-bottom));
-        border-top: 1px solid rgba(241, 202, 99, 0.16);
+        border-top: 1px solid var(--line-soft);
         background: rgba(4, 3, 7, 0.97);
         backdrop-filter: blur(18px);
       }
 
       .bottom button {
-        min-height: 52px;
+        min-height: 50px;
         border: 0;
+        border-radius: var(--radius);
         color: var(--muted);
         background: transparent;
-        font-size: 12px;
-        font-weight: 880;
+        font-size: 13px;
+        font-weight: 900;
       }
 
-      .bottom button.active { color: var(--gold-light); }
+      .bottom button.active { color: var(--gold-light); background: rgba(214, 162, 58, 0.09); }
     </style>
   </head>
   <body>
-    <main class="app">
-      <header class="topbar">
-        <div>
-          <h1>Работа рядом</h1>
-          <p class="subtitle" id="subtitle">Найти человека или работу рядом</p>
-        </div>
-        <span class="safe">Защита</span>
-      </header>
-
-      <section class="tabs" aria-label="Режим">
-        <button id="customerTab" class="active" type="button">Нужен исполнитель</button>
-        <button id="workerTab" type="button">Ищу работу</button>
-      </section>
-
-      <section class="panel">
-        <label class="label" for="query" id="queryLabel">Что нужно сделать?</label>
-        <textarea id="query" autocomplete="off" maxlength="240" placeholder="Коротко опишите задачу"></textarea>
-
-        <section class="chips" aria-label="Категории" id="categoryChips"></section>
-
-        <section class="grid" aria-label="Формат">
-          <button class="choice active" type="button" data-scope="near">Рядом</button>
-          <button class="choice" type="button" data-scope="remote">Удалённо</button>
-        </section>
-
-        <section class="grid" aria-label="Доверие">
-          <button class="choice active" type="button" data-trust="any">Любой опыт</button>
-          <button class="choice" type="button" data-trust="verified">Проверенный</button>
-        </section>
-
-        <button class="primary" type="button" id="primaryAction">Найти исполнителя</button>
-        <button class="secondary" type="button" id="secondaryAction">Создать заказ</button>
-        <p class="status" id="status" aria-live="polite"></p>
-      </section>
-
-      <nav class="bottom" aria-label="Главное меню">
-        <button class="active" type="button" data-nav="find">Найти</button>
-        <button type="button" data-nav="create">Создать</button>
-        <button type="button" data-nav="mine">Мои</button>
-      </nav>
-    </main>
+    <main class="app" id="app"></main>
+    <nav class="bottom" aria-label="Главное меню">
+      <button class="active" type="button" data-tab="find">Найти</button>
+      <button type="button" data-tab="create">Создать</button>
+      <button type="button" data-tab="mine">Мои</button>
+    </nav>
 
     <script>
       const tg = window.Telegram?.WebApp;
@@ -258,22 +192,12 @@
 
       const categories = ['Дом', 'Ремонт', 'Доставка', 'Уборка', 'Красота', 'Фриланс', 'Срочно'];
       const state = {
-        mode: new URLSearchParams(window.location.search).get('mode') === 'workers' ? 'worker' : 'customer',
-        category: categories[0],
-        scope: 'near',
-        trust: 'any'
-      };
-
-      const els = {
-        subtitle: document.getElementById('subtitle'),
-        customerTab: document.getElementById('customerTab'),
-        workerTab: document.getElementById('workerTab'),
-        queryLabel: document.getElementById('queryLabel'),
-        query: document.getElementById('query'),
-        categoryChips: document.getElementById('categoryChips'),
-        primary: document.getElementById('primaryAction'),
-        secondary: document.getElementById('secondaryAction'),
-        status: document.getElementById('status')
+        tab: new URLSearchParams(location.search).get('tab') || 'find',
+        find: { text: '', category: 'Дом', format: 'near', trust: 'any' },
+        order: { description: '', category: 'Дом', location: '', budget: '', urgency: 'today', format: 'near' },
+        workers: [],
+        publishedOrder: null,
+        status: ''
       };
 
       function escapeHtml(value) {
@@ -285,98 +209,236 @@
           .replaceAll("'", '&#39;');
       }
 
-      function renderCategories() {
-        els.categoryChips.innerHTML = categories.map((category) => (
-          `<button class="chip ${category === state.category ? 'active' : ''}" type="button" data-category="${escapeHtml(category)}">${escapeHtml(category)}</button>`
-        )).join('');
+      function payload(action, data) {
+        return { source: 'nearby_mini_app', action, data, at: new Date().toISOString() };
       }
 
-      function setMode(mode) {
-        state.mode = mode;
-        els.customerTab.classList.toggle('active', mode === 'customer');
-        els.workerTab.classList.toggle('active', mode === 'worker');
-        els.subtitle.textContent = mode === 'customer' ? 'Найти исполнителя рядом' : 'Найти работу рядом';
-        els.queryLabel.textContent = mode === 'customer' ? 'Что нужно сделать?' : 'Какую работу ищете?';
-        els.query.placeholder = mode === 'customer' ? 'Коротко опишите задачу' : 'Коротко опишите навык или работу';
-        els.primary.textContent = mode === 'customer' ? 'Найти исполнителя' : 'Найти работу';
-        els.secondary.textContent = mode === 'customer' ? 'Создать заказ' : 'Стать исполнителем';
-        els.status.textContent = '';
-        updateMainButton();
-      }
-
-      function payload(action) {
-        return {
-          source: 'mini_app',
-          action,
-          role: state.mode,
-          category: state.category,
-          scope: state.scope,
-          trust: state.trust,
-          text: els.query.value.trim(),
-          at: new Date().toISOString()
-        };
-      }
-
-      function submit(action) {
-        const data = payload(action);
-        localStorage.setItem('work_nearby_last_intent', JSON.stringify(data));
-
+      function send(action, data) {
+        const body = payload(action, data);
+        localStorage.setItem('nearby_last_payload', JSON.stringify(body));
         if (tg?.sendData) {
-          tg.sendData(JSON.stringify(data));
-          els.status.className = 'status';
-          els.status.textContent = 'Отправлено в Telegram';
-          return;
+          tg.sendData(JSON.stringify(body));
+          state.status = 'Отправлено в Telegram';
+        } else {
+          state.status = 'Откройте через Telegram';
         }
+      }
 
-        els.status.className = 'status alert';
-        els.status.textContent = 'Откройте через Telegram';
+      function workersFor(form) {
+        const distance = form.format === 'near' ? ['0.8 км', '1.6 км', '2.4 км'] : ['Удалённо', 'Удалённо', 'Удалённо'];
+        const trust = form.trust === 'verified' ? 'Проверенный' : 'Базовый';
+        return [
+          { id: 'nearby-worker-1', name: form.trust === 'verified' ? 'verified_pro' : 'nearby_master', category: form.category, distance: distance[0], rating: '4.9', priceFrom: form.category === 'Фриланс' ? 'от 900 грн' : 'от 500 грн', trustBadge: trust },
+          { id: 'nearby-worker-2', name: 'fast_helper', category: form.category, distance: distance[1], rating: '4.8', priceFrom: form.category === 'Срочно' ? 'от 700 грн' : 'от 450 грн', trustBadge: trust },
+          { id: 'nearby-worker-3', name: 'new_worker', category: form.category, distance: distance[2], rating: 'новый', priceFrom: 'договорная', trustBadge: form.trust === 'verified' ? 'Фото и телефон' : 'Новичок' }
+        ];
+      }
+
+      function field(label, inner) {
+        return `<section class="field"><span>${escapeHtml(label)}</span>${inner}</section>`;
+      }
+
+      function chips(value, target) {
+        return `<div class="chips">${categories.map((category) => (
+          `<button class="chip ${category === value ? 'active' : ''}" type="button" data-${target}="${escapeHtml(category)}">${escapeHtml(category)}</button>`
+        )).join('')}</div>`;
+      }
+
+      function segmented(items, value, target) {
+        return `<div class="segmented">${items.map((item) => (
+          `<button class="${item.value === value ? 'active' : ''}" type="button" data-${target}="${escapeHtml(item.value)}">${escapeHtml(item.label)}</button>`
+        )).join('')}</div>`;
+      }
+
+      function empty(title, text) {
+        return `<section class="empty"><h2>${escapeHtml(title)}</h2><p>${escapeHtml(text)}</p></section>`;
+      }
+
+      function workerCard(worker) {
+        return `
+          <article class="card">
+            <div><h2>${escapeHtml(worker.name)}</h2><p>${escapeHtml(worker.category)}</p></div>
+            <div class="meta">
+              <span>${escapeHtml(worker.distance)}</span>
+              <span>★ ${escapeHtml(worker.rating)}</span>
+              <span>${escapeHtml(worker.priceFrom)}</span>
+              <span class="trust">${escapeHtml(worker.trustBadge)}</span>
+            </div>
+            <button class="btn safe" type="button" data-worker="${escapeHtml(worker.id)}">Выбрать</button>
+          </article>
+        `;
+      }
+
+      function orderCard(order) {
+        return `
+          <article class="card">
+            <h2>${escapeHtml(order.title)}</h2>
+            <div class="meta">
+              <span>${escapeHtml(order.category)}</span>
+              <span>${escapeHtml(order.location)}</span>
+              <span>${escapeHtml(order.budget)}</span>
+              <span>${escapeHtml(order.urgency)}</span>
+            </div>
+          </article>
+        `;
+      }
+
+      function renderFind() {
+        const form = state.find;
+        return `
+          <section class="screen">
+            <h1>Найти исполнителя</h1>
+            ${field('Что нужно сделать?', `<textarea data-input="find.text" maxlength="240" placeholder="Например: доставить, починить, убрать">${escapeHtml(form.text)}</textarea>`)}
+            ${field('Категория', chips(form.category, 'find-category'))}
+            ${field('Формат', segmented([{ value: 'near', label: 'Рядом' }, { value: 'remote', label: 'Удалённо' }], form.format, 'find-format'))}
+            ${field('Уровень доверия', segmented([{ value: 'any', label: 'Любой' }, { value: 'verified', label: 'Проверенный' }], form.trust, 'find-trust'))}
+            <button class="btn" type="button" data-action="find">Найти</button>
+            <p class="status ${state.status === 'Откройте через Telegram' ? 'alert' : ''}">${escapeHtml(state.status)}</p>
+            <section class="results">
+              ${state.workers.length ? state.workers.map(workerCard).join('') : empty('Исполнители появятся здесь', 'Выберите параметры и нажмите «Найти».')}
+            </section>
+          </section>
+        `;
+      }
+
+      function renderCreate() {
+        const form = state.order;
+        return `
+          <section class="screen">
+            <h1>Создать заказ</h1>
+            ${field('Описание задачи', `<textarea data-input="order.description" maxlength="320" placeholder="Что нужно сделать?">${escapeHtml(form.description)}</textarea>`)}
+            ${field('Категория', chips(form.category, 'order-category'))}
+            ${field('Локация', `<input data-input="order.location" value="${escapeHtml(form.location)}" placeholder="Город или район" />`)}
+            ${field('Бюджет', `<input data-input="order.budget" value="${escapeHtml(form.budget)}" inputmode="numeric" placeholder="Например: 800 грн" />`)}
+            ${field('Срочность', segmented([{ value: 'today', label: 'Сегодня' }, { value: 'week', label: 'На неделе' }], form.urgency, 'order-urgency'))}
+            ${field('Формат', segmented([{ value: 'near', label: 'Рядом' }, { value: 'remote', label: 'Удалённо' }], form.format, 'order-format'))}
+            <button class="btn" type="button" data-action="publish">Опубликовать заказ</button>
+            <p class="status ${state.status === 'Откройте через Telegram' ? 'alert' : ''}">${escapeHtml(state.status)}</p>
+            ${state.publishedOrder ? orderCard(state.publishedOrder) : ''}
+          </section>
+        `;
+      }
+
+      function renderMine() {
+        const items = ['Мои заказы', 'Мои отклики', 'Сделки', 'Баланс', 'Рейтинг', 'Настройки'];
+        return `
+          <section class="screen">
+            <h1>Мои</h1>
+            <div class="menu-list">
+              ${items.map((item) => `<button type="button" data-section="${escapeHtml(item)}"><span>${escapeHtml(item)}</span><small>Пока пусто</small></button>`).join('')}
+            </div>
+            ${empty('Данных пока нет', 'Здесь появятся ваши заказы, отклики, сделки и баланс.')}
+          </section>
+        `;
+      }
+
+      function render() {
+        const app = document.getElementById('app');
+        app.innerHTML = state.tab === 'create' ? renderCreate() : state.tab === 'mine' ? renderMine() : renderFind();
+        document.querySelectorAll('[data-tab]').forEach((button) => {
+          button.classList.toggle('active', button.dataset.tab === state.tab);
+        });
+        updateMainButton();
       }
 
       function updateMainButton() {
         if (!tg?.MainButton) return;
-        tg.MainButton.setText(state.mode === 'customer' ? 'Найти исполнителя' : 'Найти работу');
-        tg.MainButton.show();
+        if (state.tab === 'find') {
+          tg.MainButton.setText('Найти');
+          tg.MainButton.show();
+        } else if (state.tab === 'create') {
+          tg.MainButton.setText('Опубликовать заказ');
+          tg.MainButton.show();
+        } else {
+          tg.MainButton.hide();
+        }
       }
 
-      els.customerTab.addEventListener('click', () => setMode('customer'));
-      els.workerTab.addEventListener('click', () => setMode('worker'));
-      els.primary.addEventListener('click', () => submit('find'));
-      els.secondary.addEventListener('click', () => submit(state.mode === 'customer' ? 'create_order' : 'create_worker_profile'));
+      function runMainAction() {
+        if (state.tab === 'find') runFind();
+        if (state.tab === 'create') publishOrder();
+      }
+
+      function runFind() {
+        state.workers = workersFor(state.find);
+        send('find_workers', { ...state.find, resultCount: state.workers.length });
+        render();
+      }
+
+      function selectWorker(id) {
+        const worker = state.workers.find((item) => item.id === id);
+        if (!worker) return;
+        send('select_worker', { worker, request: state.find });
+        render();
+      }
+
+      function publishOrder() {
+        const order = {
+          id: `order-${Date.now()}`,
+          title: state.order.description.trim() || 'Новый заказ',
+          category: state.order.category,
+          budget: state.order.budget.trim() || 'договорная',
+          location: state.order.format === 'remote' ? 'Удалённо' : state.order.location.trim() || 'Рядом',
+          urgency: state.order.urgency === 'today' ? 'Сегодня' : 'На этой неделе'
+        };
+        state.publishedOrder = order;
+        send('publish_order', { ...state.order, order });
+        render();
+      }
+
+      document.addEventListener('input', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const key = target.dataset.input;
+        if (!key) return;
+        const value = target.value;
+        if (key === 'find.text') state.find.text = value;
+        if (key === 'order.description') state.order.description = value;
+        if (key === 'order.location') state.order.location = value;
+        if (key === 'order.budget') state.order.budget = value;
+      });
 
       document.addEventListener('click', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
 
-        const category = target.dataset.category;
-        if (category) {
-          state.category = category;
-          renderCategories();
+        if (target.dataset.tab) {
+          state.tab = target.dataset.tab;
+          state.status = '';
+          render();
           return;
         }
 
-        const scope = target.dataset.scope;
-        if (scope) {
-          state.scope = scope;
-          document.querySelectorAll('[data-scope]').forEach((button) => button.classList.toggle('active', button === target));
+        if (target.dataset.findCategory) state.find.category = target.dataset.findCategory;
+        if (target.dataset.findFormat) state.find.format = target.dataset.findFormat;
+        if (target.dataset.findTrust) state.find.trust = target.dataset.findTrust;
+        if (target.dataset.orderCategory) state.order.category = target.dataset.orderCategory;
+        if (target.dataset.orderUrgency) state.order.urgency = target.dataset.orderUrgency;
+        if (target.dataset.orderFormat) state.order.format = target.dataset.orderFormat;
+
+        if (target.dataset.action === 'find') {
+          runFind();
+          return;
+        }
+        if (target.dataset.action === 'publish') {
+          publishOrder();
+          return;
+        }
+        if (target.dataset.worker) {
+          selectWorker(target.dataset.worker);
+          return;
+        }
+        if (target.dataset.section) {
+          send('open_profile_section', { section: target.dataset.section });
+          render();
           return;
         }
 
-        const trust = target.dataset.trust;
-        if (trust) {
-          state.trust = trust;
-          document.querySelectorAll('[data-trust]').forEach((button) => button.classList.toggle('active', button === target));
-          return;
-        }
-
-        const nav = target.dataset.nav;
-        if (nav === 'create') {
-          submit(state.mode === 'customer' ? 'create_order' : 'create_worker_profile');
-        }
+        render();
       });
 
-      tg?.MainButton?.onClick(() => submit('find'));
-      renderCategories();
-      setMode(state.mode);
+      tg?.MainButton?.onClick(runMainAction);
+      render();
     </script>
   </body>
 </html>
