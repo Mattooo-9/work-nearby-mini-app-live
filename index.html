@@ -80,6 +80,7 @@
       }
 
       .chip { width: 100%; min-width: 0; border-radius: var(--radius); padding: 0 12px; white-space: normal; }
+      .chips.compact .chip { min-height: 36px; padding: 0 8px; font-size: 13px; }
       .chip.active, .segmented button.active {
         color: #140b05;
         border-color: var(--gold-light);
@@ -190,10 +191,25 @@
       tg?.expand();
 
       const categories = ['Дом', 'Ремонт', 'Доставка', 'Уборка', 'Красота', 'Фриланс', 'Срочно'];
+      const deliveryTypes = [
+        { value: 'any', label: 'Любая' },
+        { value: 'documents', label: 'Документы' },
+        { value: 'parcel', label: 'Посылка' },
+        { value: 'food', label: 'Еда' },
+        { value: 'groceries', label: 'Продукты' },
+        { value: 'pharmacy', label: 'Аптека' },
+        { value: 'flowers_gifts', label: 'Цветы' },
+        { value: 'on_foot', label: 'Пешком' },
+        { value: 'bike', label: 'Вело' },
+        { value: 'car', label: 'Авто' },
+        { value: 'cargo', label: 'Груз' },
+        { value: 'moving', label: 'Переезд' },
+        { value: 'urgent', label: 'Срочная' }
+      ];
       const state = {
         tab: new URLSearchParams(location.search).get('tab') || 'find',
-        find: { text: '', category: 'Дом', format: 'near', trust: 'any' },
-        order: { description: '', category: 'Дом', location: '', budget: '', urgency: 'today', format: 'near' },
+        find: { text: '', category: 'Дом', format: 'near', trust: 'any', deliveryKind: 'any', priceOrder: 'price_desc' },
+        order: { description: '', category: 'Дом', location: '', budget: '', urgency: 'today', format: 'near', deliveryKind: 'parcel' },
         workers: [],
         findSubmitted: false,
         publishedOrder: null,
@@ -228,9 +244,9 @@
         return `<section class="field"><span>${escapeHtml(label)}</span>${inner}</section>`;
       }
 
-      function chips(value, target) {
-        return `<div class="chips">${categories.map((category) => (
-          `<button class="chip ${category === value ? 'active' : ''}" type="button" data-${target}="${escapeHtml(category)}">${escapeHtml(category)}</button>`
+      function chips(value, target, options = categories.map((category) => ({ value: category, label: category })), className = 'chips') {
+        return `<div class="${className}">${options.map((option) => (
+          `<button class="chip ${option.value === value ? 'active' : ''}" type="button" data-${target}="${escapeHtml(option.value)}">${escapeHtml(option.label)}</button>`
         )).join('')}</div>`;
       }
 
@@ -275,11 +291,15 @@
 
       function renderFind() {
         const form = state.find;
+        const deliveryControls = form.category === 'Доставка'
+          ? `${field('Вид доставки', chips(form.deliveryKind, 'find-delivery-kind', deliveryTypes, 'chips compact'))}${field('Цена', segmented([{ value: 'price_desc', label: 'Выше' }, { value: 'price_asc', label: 'Ниже' }], form.priceOrder, 'find-price-order'))}`
+          : '';
         return `
           <section class="screen">
             <h1>Найти исполнителя</h1>
             ${field('Что нужно сделать?', `<textarea data-input="find.text" maxlength="240" placeholder="Опишите задачу">${escapeHtml(form.text)}</textarea>`)}
             ${field('Категория', chips(form.category, 'find-category'))}
+            ${deliveryControls}
             ${field('Формат', segmented([{ value: 'near', label: 'Рядом' }, { value: 'remote', label: 'Удалённо' }], form.format, 'find-format'))}
             ${field('Уровень доверия', segmented([{ value: 'any', label: 'Любой' }, { value: 'verified', label: 'Проверенный' }], form.trust, 'find-trust'))}
             <button class="btn" type="button" data-action="find">Найти</button>
@@ -293,11 +313,15 @@
 
       function renderCreate() {
         const form = state.order;
+        const deliveryControls = form.category === 'Доставка'
+          ? field('Вид доставки', chips(form.deliveryKind, 'order-delivery-kind', deliveryTypes.filter((item) => item.value !== 'any'), 'chips compact'))
+          : '';
         return `
           <section class="screen">
             <h1>Создать заказ</h1>
             ${field('Описание задачи', `<textarea data-input="order.description" maxlength="320" placeholder="Что нужно сделать?">${escapeHtml(form.description)}</textarea>`)}
             ${field('Категория', chips(form.category, 'order-category'))}
+            ${deliveryControls}
             ${field('Локация', `<input data-input="order.location" value="${escapeHtml(form.location)}" placeholder="Город или район" />`)}
             ${field('Бюджет', `<input data-input="order.budget" value="${escapeHtml(form.budget)}" inputmode="numeric" placeholder="Введите бюджет" />`)}
             ${field('Срочность', segmented([{ value: 'today', label: 'Сегодня' }, { value: 'week', label: 'На неделе' }], form.urgency, 'order-urgency'))}
@@ -417,7 +441,7 @@
       document.addEventListener('click', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
-        const control = target.closest('[data-tab], [data-find-category], [data-find-format], [data-find-trust], [data-order-category], [data-order-urgency], [data-order-format], [data-action], [data-worker], [data-section]');
+        const control = target.closest('[data-tab], [data-find-category], [data-find-delivery-kind], [data-find-price-order], [data-find-format], [data-find-trust], [data-order-category], [data-order-delivery-kind], [data-order-urgency], [data-order-format], [data-action], [data-worker], [data-section]');
         if (!(control instanceof HTMLElement)) return;
 
         if (control.dataset.tab) {
@@ -429,6 +453,16 @@
 
         if (control.dataset.findCategory) {
           state.find.category = control.dataset.findCategory;
+          render();
+          return;
+        }
+        if (control.dataset.findDeliveryKind) {
+          state.find.deliveryKind = control.dataset.findDeliveryKind;
+          render();
+          return;
+        }
+        if (control.dataset.findPriceOrder) {
+          state.find.priceOrder = control.dataset.findPriceOrder;
           render();
           return;
         }
@@ -444,6 +478,11 @@
         }
         if (control.dataset.orderCategory) {
           state.order.category = control.dataset.orderCategory;
+          render();
+          return;
+        }
+        if (control.dataset.orderDeliveryKind) {
+          state.order.deliveryKind = control.dataset.orderDeliveryKind;
           render();
           return;
         }
