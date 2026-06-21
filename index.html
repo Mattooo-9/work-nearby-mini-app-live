@@ -190,25 +190,25 @@
       tg?.ready();
       tg?.expand();
 
-      const categories = ['Дом', 'Ремонт', 'Доставка', 'Уборка', 'Красота', 'Фриланс', 'Срочно'];
+      const categories = ['Авто', 'Айти', 'Грузчики', 'Доставка', 'Дом', 'Красота', 'Курьер', 'Мероприятия', 'Обучение', 'Ремонт', 'Сад', 'Склад', 'Стройка', 'Уборка', 'Фриланс', 'Юрпомощь'];
       const deliveryTypes = [
         { value: 'any', label: 'Любая' },
-        { value: 'documents', label: 'Документы' },
-        { value: 'parcel', label: 'Посылка' },
-        { value: 'food', label: 'Еда' },
-        { value: 'groceries', label: 'Продукты' },
-        { value: 'pharmacy', label: 'Аптека' },
-        { value: 'flowers_gifts', label: 'Цветы' },
-        { value: 'on_foot', label: 'Пешком' },
-        { value: 'bike', label: 'Вело' },
         { value: 'car', label: 'Авто' },
+        { value: 'pharmacy', label: 'Аптека' },
+        { value: 'bike', label: 'Вело' },
         { value: 'cargo', label: 'Груз' },
+        { value: 'documents', label: 'Документы' },
+        { value: 'food', label: 'Еда' },
+        { value: 'on_foot', label: 'Пешком' },
         { value: 'moving', label: 'Переезд' },
-        { value: 'urgent', label: 'Срочная' }
+        { value: 'parcel', label: 'Посылка' },
+        { value: 'groceries', label: 'Продукты' },
+        { value: 'urgent', label: 'Срочная' },
+        { value: 'flowers_gifts', label: 'Цветы' }
       ];
       const state = {
         tab: new URLSearchParams(location.search).get('tab') || 'find',
-        find: { text: '', category: 'Дом', format: 'near', trust: 'any', deliveryKind: 'any', priceOrder: 'price_desc' },
+        find: { text: '', target: 'worker', category: 'Дом', format: 'near', trust: 'any', deliveryKind: 'any', priceOrder: 'price_desc' },
         order: { description: '', category: 'Дом', location: '', budget: '', urgency: 'today', format: 'near', deliveryKind: 'parcel' },
         workers: [],
         findSubmitted: false,
@@ -294,18 +294,20 @@
         const deliveryControls = form.category === 'Доставка'
           ? `${field('Вид доставки', chips(form.deliveryKind, 'find-delivery-kind', deliveryTypes, 'chips compact'))}${field('Цена', segmented([{ value: 'price_desc', label: 'Выше' }, { value: 'price_asc', label: 'Ниже' }], form.priceOrder, 'find-price-order'))}`
           : '';
+        const targetText = form.target === 'job' ? 'заказов' : 'исполнителей';
         return `
           <section class="screen">
-            <h1>Найти исполнителя</h1>
-            ${field('Что нужно сделать?', `<textarea data-input="find.text" maxlength="240" placeholder="Опишите задачу">${escapeHtml(form.text)}</textarea>`)}
+            <h1>Найти</h1>
+            ${field('Что найти', segmented([{ value: 'worker', label: 'Исполнителя' }, { value: 'job', label: 'Заказ' }], form.target, 'find-target'))}
+            ${field(form.target === 'job' ? 'Какой заказ ищете?' : 'Что нужно сделать?', `<textarea data-input="find.text" maxlength="240" placeholder="Опишите задачу">${escapeHtml(form.text)}</textarea>`)}
             ${field('Категория', chips(form.category, 'find-category'))}
             ${deliveryControls}
             ${field('Формат', segmented([{ value: 'near', label: 'Рядом' }, { value: 'remote', label: 'Удалённо' }], form.format, 'find-format'))}
-            ${field('Уровень доверия', segmented([{ value: 'any', label: 'Любой' }, { value: 'verified', label: 'Проверенный' }], form.trust, 'find-trust'))}
+            ${form.target === 'worker' ? field('Уровень доверия', segmented([{ value: 'any', label: 'Любой' }, { value: 'verified', label: 'Проверенный' }], form.trust, 'find-trust')) : ''}
             <button class="btn" type="button" data-action="find">Найти</button>
             <p class="status ${state.status === 'Откройте через Telegram' ? 'alert' : ''}">${escapeHtml(state.status)}</p>
             <section class="results">
-              ${state.workers.length ? state.workers.map(workerCard).join('') : empty(state.findSubmitted ? 'Реальных исполнителей пока нет' : 'Исполнители появятся здесь', state.findSubmitted ? 'Запрос отправлен. Здесь будут только реальные исполнители и отклики.' : 'Выберите параметры и нажмите «Найти».')}
+              ${state.workers.length ? state.workers.map(workerCard).join('') : empty(state.findSubmitted ? `Реальных ${targetText} пока нет` : `${form.target === 'job' ? 'Заказы' : 'Исполнители'} появятся здесь`, state.findSubmitted ? 'Запрос отправлен. Здесь будут только реальные данные из платформы.' : 'Выберите параметры и нажмите «Найти».')}
             </section>
           </section>
         `;
@@ -381,7 +383,7 @@
         }
         state.findSubmitted = true;
         state.workers = [];
-        send('find_workers', { ...state.find, resultCount: 0 });
+        send('find', { ...state.find, resultCount: 0 });
         render();
       }
 
@@ -441,7 +443,7 @@
       document.addEventListener('click', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
-        const control = target.closest('[data-tab], [data-find-category], [data-find-delivery-kind], [data-find-price-order], [data-find-format], [data-find-trust], [data-order-category], [data-order-delivery-kind], [data-order-urgency], [data-order-format], [data-action], [data-worker], [data-section]');
+        const control = target.closest('[data-tab], [data-find-target], [data-find-category], [data-find-delivery-kind], [data-find-price-order], [data-find-format], [data-find-trust], [data-order-category], [data-order-delivery-kind], [data-order-urgency], [data-order-format], [data-action], [data-worker], [data-section]');
         if (!(control instanceof HTMLElement)) return;
 
         if (control.dataset.tab) {
@@ -451,6 +453,11 @@
           return;
         }
 
+        if (control.dataset.findTarget) {
+          state.find.target = control.dataset.findTarget;
+          render();
+          return;
+        }
         if (control.dataset.findCategory) {
           state.find.category = control.dataset.findCategory;
           render();
