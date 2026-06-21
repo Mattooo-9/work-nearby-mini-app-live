@@ -187,9 +187,20 @@
 
     <script>
       const tg = window.Telegram?.WebApp;
+      function hideTelegramMainButton() {
+        tg?.MainButton?.disable?.();
+        tg?.MainButton?.hide?.();
+      }
       tg?.ready();
       tg?.expand();
-      tg?.MainButton?.hide();
+      hideTelegramMainButton();
+      const hideMainButtonInterval = window.setInterval(hideTelegramMainButton, 250);
+      window.setTimeout(() => window.clearInterval(hideMainButtonInterval), 4000);
+      window.addEventListener('focus', hideTelegramMainButton);
+      window.addEventListener('pageshow', hideTelegramMainButton);
+      window.addEventListener('visibilitychange', hideTelegramMainButton);
+      tg?.onEvent?.('viewportChanged', hideTelegramMainButton);
+      tg?.onEvent?.('themeChanged', hideTelegramMainButton);
 
       const categories = ['Авто', 'Айти', 'Грузчики', 'Доставка', 'Дом', 'Красота', 'Курьер', 'Мероприятия', 'Обучение', 'Ремонт', 'Сад', 'Склад', 'Стройка', 'Уборка', 'Фриланс', 'Юрпомощь'];
       const deliveryTypes = [
@@ -207,6 +218,19 @@
         { value: 'urgent', label: 'Срочная' },
         { value: 'flowers_gifts', label: 'Цветы' }
       ];
+      const ordersStorageKey = 'nearby_orders';
+      function loadOrders() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(ordersStorageKey) || '[]');
+          return Array.isArray(parsed) ? parsed.filter((item) => item?.id && item?.title) : [];
+        } catch {
+          return [];
+        }
+      }
+      function saveOrders(orders) {
+        localStorage.setItem(ordersStorageKey, JSON.stringify(orders.slice(0, 50)));
+      }
+
       const state = {
         tab: new URLSearchParams(location.search).get('tab') || 'find',
         find: { text: '', target: 'worker', category: 'Дом', format: 'near', trust: 'any', deliveryKind: 'any', priceOrder: 'price_desc' },
@@ -214,6 +238,7 @@
         workers: [],
         findSubmitted: false,
         publishedOrder: null,
+        orders: loadOrders(),
         status: ''
       };
 
@@ -230,12 +255,12 @@
         return { source: 'nearby_mini_app', action, data, at: new Date().toISOString() };
       }
 
-      function send(action, data) {
+      function send(action, data, successStatus = 'Отправлено в Telegram') {
         const body = payload(action, data);
         localStorage.setItem('nearby_last_payload', JSON.stringify(body));
         if (tg?.sendData) {
           tg.sendData(JSON.stringify(body));
-          state.status = 'Отправлено в Telegram';
+          state.status = successStatus;
         } else {
           state.status = 'Откройте через Telegram';
         }
@@ -276,7 +301,7 @@
         `;
       }
 
-      function orderCard(order) {
+      function orderCard(order, action = '') {
         return `
           <article class="card">
             <h2>${escapeHtml(order.title)}</h2>
@@ -286,6 +311,7 @@
               <span>${escapeHtml(order.budget)}</span>
               <span>${escapeHtml(order.urgency)}</span>
             </div>
+            ${action}
           </article>
         `;
       }
@@ -329,22 +355,26 @@
             ${field('Бюджет', `<input data-input="order.budget" value="${escapeHtml(form.budget)}" inputmode="numeric" placeholder="Введите бюджет" />`)}
             ${field('Срочность', segmented([{ value: 'today', label: 'Сегодня' }, { value: 'week', label: 'На неделе' }], form.urgency, 'order-urgency'))}
             ${field('Формат', segmented([{ value: 'near', label: 'Рядом' }, { value: 'remote', label: 'Удалённо' }], form.format, 'order-format'))}
-            <button class="btn" type="button" data-action="publish">Опубликовать заказ</button>
+            <button class="btn" type="button" data-action="publish">Опубликовать</button>
             <p class="status ${state.status === 'Откройте через Telegram' ? 'alert' : ''}">${escapeHtml(state.status)}</p>
-            ${state.publishedOrder ? `${orderCard(state.publishedOrder)}<button class="btn safe" type="button" data-action="payment">Оплатить безопасно</button>` : ''}
           </section>
         `;
       }
 
       function renderMine() {
-        const items = ['Мои заказы', 'Мои отклики', 'Сделки', 'Баланс', 'Рейтинг', 'Настройки'];
+        const items = ['Мои отклики', 'Сделки', 'Баланс', 'Рейтинг', 'Настройки'];
+        const orders = state.orders.length
+          ? `<section class="results">${state.orders.map((order) => orderCard(order, `<button class="btn safe" type="button" data-order-payment="${escapeHtml(order.id)}">Оплатить</button>`)).join('')}</section>`
+          : empty('Заказов пока нет', 'Опубликуйте заказ, и он появится здесь.');
         return `
           <section class="screen">
             <h1>Мои</h1>
+            <h2>Мои заказы</h2>
+            ${orders}
+            <p class="status ${state.status === 'Откройте через Telegram' ? 'alert' : ''}">${escapeHtml(state.status)}</p>
             <div class="menu-list">
               ${items.map((item) => `<button type="button" data-section="${escapeHtml(item)}"><span>${escapeHtml(item)}</span><small>Пока пусто</small></button>`).join('')}
             </div>
-            ${empty('Данных пока нет', 'Здесь появятся ваши заказы, отклики, сделки и баланс.')}
           </section>
         `;
       }
@@ -359,8 +389,7 @@
       }
 
       function updateMainButton() {
-        if (!tg?.MainButton) return;
-        tg.MainButton.hide();
+        hideTelegramMainButton();
       }
 
       function runFind() {
@@ -394,25 +423,32 @@
           category: state.order.category,
           budget: state.order.budget.trim() || 'Бюджет не указан',
           location: state.order.format === 'remote' ? 'Удалённо' : state.order.location.trim() || 'Локация не указана',
-          urgency: state.order.urgency === 'today' ? 'Сегодня' : 'На этой неделе'
+          urgency: state.order.urgency === 'today' ? 'Сегодня' : 'На этой неделе',
+          status: 'Опубликован',
+          createdAt: new Date().toISOString()
         };
         state.publishedOrder = order;
-        send('publish_order', { ...state.order, order });
+        state.orders = [order, ...state.orders.filter((item) => item.id !== order.id)];
+        saveOrders(state.orders);
+        state.tab = 'mine';
+        send('publish_order', { ...state.order, order }, 'Опубликовано. Заказ в разделе «Мои».');
         render();
       }
 
-      function requestPayment() {
-        if (!state.publishedOrder) {
+      function requestPayment(orderId) {
+        const order = state.orders.find((item) => item.id === orderId) || state.publishedOrder;
+        if (!order) {
           state.status = 'Сначала опубликуйте заказ';
           render();
           return;
         }
-        if (!state.order.budget.trim()) {
+        const budget = order.budget === 'Бюджет не указан' ? '' : order.budget;
+        if (!budget.trim()) {
           state.status = 'Укажите бюджет для оплаты';
           render();
           return;
         }
-        send('request_payment', { order: state.publishedOrder, budget: state.order.budget.trim(), escrow: true });
+        send('request_payment', { order, budget: budget.trim(), escrow: true }, 'Счёт отправлен в Telegram.');
         render();
       }
 
@@ -431,7 +467,7 @@
       document.addEventListener('click', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
-        const control = target.closest('[data-tab], [data-find-target], [data-find-category], [data-find-delivery-kind], [data-find-price-order], [data-find-format], [data-find-trust], [data-order-category], [data-order-delivery-kind], [data-order-urgency], [data-order-format], [data-action], [data-worker], [data-section]');
+        const control = target.closest('[data-tab], [data-find-target], [data-find-category], [data-find-delivery-kind], [data-find-price-order], [data-find-format], [data-find-trust], [data-order-category], [data-order-delivery-kind], [data-order-urgency], [data-order-format], [data-action], [data-worker], [data-order-payment], [data-section]');
         if (!(control instanceof HTMLElement)) return;
 
         if (control.dataset.tab) {
@@ -502,6 +538,10 @@
         }
         if (control.dataset.action === 'payment') {
           requestPayment();
+          return;
+        }
+        if (control.dataset.orderPayment) {
+          requestPayment(control.dataset.orderPayment);
           return;
         }
         if (control.dataset.worker) {
