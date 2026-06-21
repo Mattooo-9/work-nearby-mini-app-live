@@ -189,6 +189,7 @@
       const tg = window.Telegram?.WebApp;
       tg?.ready();
       tg?.expand();
+      tg?.MainButton?.hide();
 
       const categories = ['Авто', 'Айти', 'Грузчики', 'Доставка', 'Дом', 'Красота', 'Курьер', 'Мероприятия', 'Обучение', 'Ремонт', 'Сад', 'Склад', 'Стройка', 'Уборка', 'Фриланс', 'Юрпомощь'];
       const deliveryTypes = [
@@ -359,20 +360,7 @@
 
       function updateMainButton() {
         if (!tg?.MainButton) return;
-        if (state.tab === 'find') {
-          tg.MainButton.setText('Найти');
-          tg.MainButton.show();
-        } else if (state.tab === 'create') {
-          tg.MainButton.setText('Опубликовать заказ');
-          tg.MainButton.show();
-        } else {
-          tg.MainButton.hide();
-        }
-      }
-
-      function runMainAction() {
-        if (state.tab === 'find') runFind();
-        if (state.tab === 'create') publishOrder();
+        tg.MainButton.hide();
       }
 
       function runFind() {
@@ -527,7 +515,6 @@
         }
       });
 
-      tg?.MainButton?.onClick(runMainAction);
       render();
     </script>
   </body>
